@@ -5,14 +5,13 @@
             [clojure.tools.namespace.repl :as r])
   (:import [org.joda.time DateTime]
            [org.joda.time.format DateTimeFormat]))
-
-(defonce namespaces-to-test #"robotsanta\.test\..*")
+ 
 (defonce date-format (DateTimeFormat/mediumDateTime))
 
-(defn run-tests []
+(defn run-tests [project]
   (try
     (println (.print date-format (DateTime/now)))
-    (t/run-all-tests #".*")
+    (t/run-all-tests (:test-matcher project #".*test.*"))
     (catch Exception e (println e))))
 
 (defn clear-console []
@@ -24,10 +23,10 @@
     (.printStackTrace *e)
     (set! *e nil)))
 
-(defn reload-and-test []
+(defn reload-and-test [project]
   (reload)
   (clear-console)
-  (run-tests))
+  (run-tests project))
 
 (defn all-files [paths]
   (mapcat #(file-seq (clojure.java.io/file %)) paths))
@@ -38,25 +37,18 @@
 (defn get-file-state [paths]
   (reduce #(assoc %1 (.getAbsolutePath %2) (.lastModified %2)) {} (all-clj-files paths)))
 
-(defn run-tests-forever [paths]
+(defn run-tests-forever [paths project]
   (loop [current-state (get-file-state paths)
          changes current-state] (when (not (= changes current-state))
-                                  (reload-and-test))
+                                  (reload-and-test project))
     (Thread/sleep 1000)
     (recur changes (get-file-state paths))))
 
-(defn run-tests-once []
-  (let [results (t/run-all-tests namespaces-to-test)
-        failures (+ (:error results) (:fail results))]
-    (when (> failures 0)
-      (System/exit 1))))
-
-(defn run [paths]
-  (println "Fart")
+(defn run [paths project]
   (try
     (reload)
 
-    (do (run-tests) (run-tests-forever paths))
+    (do (run-tests project) (run-tests-forever paths project))
 
     (catch Exception e (println e))
     (finally
@@ -66,4 +58,4 @@
   "Automatically run tests when clj files change"
   [project & args]
   ;(run/run project "-m" "leiningen.autotest" "-auto" (first (:source-paths project)) (first (:test-paths project))))
-  (run [(first (:source-paths project)) (first (:test-paths project))]))
+  (run [(first (:source-paths project)) (first (:test-paths project))] project))
