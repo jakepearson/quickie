@@ -2,15 +2,10 @@
   (:require [leiningen.run :as run]
             [clojure.test :as t]
             [clojure.test.junit :as junit]
-            [clojure.tools.namespace.repl :as r])
-  (:import [org.joda.time DateTime]
-           [org.joda.time.format DateTimeFormat]))
+            [clojure.tools.namespace.repl :as r]))
  
-(defonce date-format (DateTimeFormat/mediumDateTime))
-
 (defn run-tests [project]
   (try
-    (println (.print date-format (DateTime/now)))
     (t/run-all-tests (:test-matcher project #".*test.*"))
     (catch Exception e (println e))))
 
