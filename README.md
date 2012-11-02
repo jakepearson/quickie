@@ -15,6 +15,9 @@ Put `[quickie "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
+By default all namespaces in your classpath with test in them will be run each time.  To change this
+add some code like this to your project.clj `:test-matcher #"my regular expression"`
+
 Hit ctrl+c whenever you are done.  Have fun!
 
 ## License
