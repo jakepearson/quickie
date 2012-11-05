@@ -33,19 +33,20 @@
 (defn get-file-state [paths]
   (reduce #(assoc %1 (.getAbsolutePath %2) (.lastModified %2)) {} (all-clj-files paths)))
 
-(defn run-tests-forever [paths project]
-  (loop [current-state (get-file-state paths)
+(defn run-tests-forever [project]
+  (loop [current-state (get-file-state (:paths project))
          changes current-state] (when (not (= changes current-state))
                                   (reload-and-test project))
     (Thread/sleep 1000)
-    (recur changes (get-file-state paths))))
+    (recur changes (get-file-state (:paths project)))))
 
-(defn run [paths project]
-  (apply repl/set-refresh-dirs paths)
+(defn run [project]
+  (println project)
+  (apply repl/set-refresh-dirs (:paths project))
   (try
     (reload)
 
-    (do (run-tests project) (run-tests-forever paths project))
+    (do (run-tests project) (run-tests-forever project))
 
     (catch Exception e (println e))
     (finally
