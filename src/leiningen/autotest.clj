@@ -5,7 +5,10 @@
 (defn run-tests [project]
   (try
     (test/run-all-tests (:test-matcher project #".*test.*"))
-    (catch Exception e (println e))))
+    (catch Exception e 
+      (do
+        (println (.getMessage e))
+        (.printStackTrace e)))))
 
 (defn clear-console []
   (println (str (char 27) "[2J")))
