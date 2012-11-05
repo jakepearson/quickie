@@ -12,7 +12,6 @@
 (defn quickie
   "Automatically run tests when clj files change"
   [project & args]
-  (println project)
   (eval/eval-in-project 
     (update-in project [:dependencies] conj ['quickie "0.1.0-SNAPSHOT"])
     (let [parameters (-> {}
