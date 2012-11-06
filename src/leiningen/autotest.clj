@@ -41,7 +41,6 @@
     (recur changes (get-file-state (:paths project)))))
 
 (defn run [project]
-  (println project)
   (apply repl/set-refresh-dirs (:paths project))
   (try
     (reload)
