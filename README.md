@@ -29,3 +29,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 * Adam Esterline
 * Jeff Smith
 * Russ Teabeault
+* Chris Perkins
+* Jake Pearson
