@@ -24,3 +24,8 @@ Hit ctrl+c whenever you are done.  Have fun!
 Copyright © 2012 Jake Pearson
 
 Distributed under the Eclipse Public License, the same as Clojure.
+
+## Contributors
+* Adam Esterline
+* Jeff Smith
+* Russ Teabeault
