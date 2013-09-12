@@ -1,10 +1,15 @@
 (ns leiningen.autotest
   (:require [clojure.test :as test]
-            [clojure.tools.namespace.repl :as repl]))
+            [clojure.tools.namespace.repl :as repl]
+            [clansi.core :as clansi]))
  
 (defn run-tests [project]
   (try
-    (test/run-all-tests (:test-matcher project #".*test.*"))
+    (let [matcher              (:test-matcher project #"test")
+          {:keys [error fail]} (test/run-all-tests matcher)]
+      (if (= 0 (+ error fail))
+        (println (clansi/style "   All Tests Passing!!!!   " :black :bg-green))
+        (println (clansi/style (str "   " error " errors and " fail " failures   ") :black :bg-red))))
     (catch Exception e 
       (do
         (println (.getMessage e))
@@ -35,8 +40,9 @@
 
 (defn run-tests-forever [project]
   (loop [current-state (get-file-state (:paths project))
-         changes current-state] (when (not (= changes current-state))
-                                  (reload-and-test project))
+         changes       current-state]
+    (when (not (= changes current-state))
+      (reload-and-test project))
     (Thread/sleep 1000)
     (recur changes (get-file-state (:paths project)))))
 
@@ -45,7 +51,9 @@
   (try
     (reload)
 
-    (do (run-tests project) (run-tests-forever project))
+    (do
+      (run-tests project)
+      (run-tests-forever project))
 
     (catch Exception e (println e))
     (finally

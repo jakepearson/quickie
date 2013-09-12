@@ -4,16 +4,21 @@
 (defn paths [parameters project]
   (assoc parameters :paths [(first (:source-paths project)) (first (:test-paths project))]))
 
+(defn default-pattern [project]
+  (let [name (or (:name project)
+                 (:group project))]
+    (re-pattern (str ".*" name ".*"))))
+
 (defn test-matcher [parameters project]
-  (if (:test-matcher project)
-    (assoc parameters :test-matcher (:test-matcher project))
-    (assoc parameters :test-matcher (re-pattern (str ".*" (:group project) ".*")))))
+  (if-let [matcher (:test-matcher project)]
+    (assoc parameters :test-matcher matcher)
+    (assoc parameters :test-matcher (default-pattern project))))
  
 (defn quickie
   "Automatically run tests when clj files change"
   [project & args]
   (eval/eval-in-project 
-    (update-in project [:dependencies] conj ['quickie "0.1.0-SNAPSHOT"])
+    (update-in project [:dependencies] conj ['quickie "0.2.0"])
     (let [parameters (-> {}
                          (paths project)
                          (test-matcher project))]
