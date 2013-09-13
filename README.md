@@ -1,13 +1,16 @@
 # quickie
 
-A Leiningen plugin to that will magically re-run all your tests when a file changes
+A Leiningen plugin to that will magically re-run all your tests when a file changes.
+
+## Features
+
+* Uses the builtin clojure.test test runner so you don't need to rewrite your tests
+* Tools.namespace will unload and reload namespaces as needed to keep process in sync
+* Runs every time a clojure file in your project changes
+* Uses (Clansi)[https://github.com/ams-clj/clansi] to show a red or green bar to know if you tests are passing
+* Filters out exception stacktraces to remove cruft
+
 ## Usage
-
-Use this for user-level plugins:
-
-Put `[quickie "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your
-`:user` profile, or if you are on Leiningen 1.x do `lein plugin install
-quickie 0.1.0-SNAPSHOT`.
 
 Use this for project-level plugins:
 
@@ -15,7 +18,7 @@ Put `[quickie "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
-By default all namespaces in your classpath with that contain your project name will be tested for each run.  To change this, add a line like this to your project.clj `:test-matcher #"my regular expression"`
+By default all namespaces in your classpath with that contain your project name and end with the work `test` will be tested for each run.  To change this, add a line like this to your project.clj `:test-matcher #"my regular expression"`
 
 Hit ctrl+c whenever you are done.  Have fun!
 

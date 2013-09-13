@@ -1,20 +1,7 @@
 (ns leiningen.autotest
-  (:require [clojure.test :as test]
-            [clojure.tools.namespace.repl :as repl]
-            [clansi.core :as clansi]))
+  (:require [clojure.tools.namespace.repl :as repl]
+            [leiningen.runner :as runner]))
  
-(defn run-tests [project]
-  (try
-    (let [matcher              (:test-matcher project #"test")
-          {:keys [error fail]} (test/run-all-tests matcher)]
-      (if (= 0 (+ error fail))
-        (println (clansi/style "   All Tests Passing!!!!   " :black :bg-green))
-        (println (clansi/style (str "   " error " errors and " fail " failures   ") :black :bg-red))))
-    (catch Exception e 
-      (do
-        (println (.getMessage e))
-        (.printStackTrace e)))))
-
 (defn clear-console []
   (println (str (char 27) "[2J")))
 
@@ -27,7 +14,7 @@
 (defn reload-and-test [project]
   (reload)
   (clear-console)
-  (run-tests project))
+  (runner/run project))
 
 (defn all-files [paths]
   (mapcat #(file-seq (clojure.java.io/file %)) paths))
@@ -52,7 +39,7 @@
     (reload)
 
     (do
-      (run-tests project)
+      (runner/run project)
       (run-tests-forever project))
 
     (catch Exception e (println e))
