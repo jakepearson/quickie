@@ -14,7 +14,7 @@ A Leiningen plugin to that will magically re-run all your tests when a file chan
 
 Use this for project-level plugins:
 
-Put `[quickie "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.2.1"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
