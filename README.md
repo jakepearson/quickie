@@ -2,6 +2,8 @@
 
 A Leiningen plugin to that will magically re-run all your tests when a file changes.
 
+![Screenshot](doc/screen.png)
+
 ## Features
 
 * Uses the builtin clojure.test test runner so you don't need to rewrite your tests
