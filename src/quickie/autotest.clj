@@ -1,6 +1,6 @@
-(ns leiningen.autotest
+(ns quickie.autotest
   (:require [clojure.tools.namespace.repl :as repl]
-            [leiningen.runner :as runner]))
+            [quickie.runner :as runner]))
  
 (defn clear-console []
   (println (str (char 27) "[2J")))

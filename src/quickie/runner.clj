@@ -1,4 +1,4 @@
-(ns leiningen.runner
+(ns quickie.runner
   (:require [clojure.test :as test]
             [clansi.core :as clansi]
             [clojure.string :as string]))
@@ -12,17 +12,38 @@
                       butlast)
           :result result}))))
 
-(defn unneeded-line? [line]
-  (let [line (string/trim line)]
-    (or (re-seq #"^leiningen\.runner" line)
-        (re-seq #"^leiningen\.autotest" line)
-        (re-seq #"^user\$eval" line)
-        (re-seq #"^clojure\.lang" line)
-        (re-seq #"^clojure\.test" line)
-        (re-seq #"^clojure\.core" line)
-        (re-seq #"^clojure\.main" line)
-        (re-seq #"^java\.lang" line)
-        (re-seq #"^java\.util\.concurrent\.ThreadPoolExecutor\$Worker" line))))
+(def matchers
+  [#"^quickie\.runner"
+   #"^quickie\.autotest"
+   #"^user\$eval"
+   #"^clojure\.lang"
+   #"^clojure\.test"
+   #"^clojure\.core"
+   #"^clojure\.main"
+   #"^java\.lang"
+   #"^java\.util\.concurrent\.ThreadPoolExecutor\$Worker"])
+
+(defn needed-line [line]
+  (let [line-trimmed (string/trim line)
+        needed       (not-any? #(re-seq % line-trimmed) matchers)]
+    {:line   line
+     :needed needed}))
+
+(def group-size 5)
+(def prefix-size (long (/ group-size 2)))
+
+(defn group-lines [lines]
+  (let [matched-lines     (map needed-line lines)
+        prefix            (repeat prefix-size nil)
+        partionable-lines (concat prefix matched-lines prefix)]
+    (partition group-size 1 partionable-lines)))
+
+(defn filter-lines [lines]
+  (let [groups       (group-lines lines)
+        needed-line? (fn [group] (some :needed group))
+        needed-lines (filter needed-line? groups)]
+    (->> (map #(nth % prefix-size) needed-lines)
+         (map :line))))
 
 (defn print-pass [result]
   (-> (:output result)
@@ -34,7 +55,7 @@
   (let [{:keys [error fail]} (:result result)
         lines               (:output result)]
     (->> lines
-         (remove unneeded-line?)
+         filter-lines
          (string/join "\n")
          println)
     (println (clansi/style (str "   " error " errors and " fail " failures   ") :black :bg-red))))
