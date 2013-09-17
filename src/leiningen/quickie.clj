@@ -18,7 +18,7 @@
   "Automatically run tests when clj files change"
   [project & args]
   (eval/eval-in-project 
-    (update-in project [:dependencies] conj ['quickie "0.2.2"])
+    (update-in project [:dependencies] conj ['quickie "0.2.3"])
     (let [parameters (-> {}
                          (paths project)
                          (test-matcher project))]

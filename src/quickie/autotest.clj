@@ -12,8 +12,8 @@
     (set! *e nil)))
 
 (defn reload-and-test [project]
-  (reload)
   (clear-console)
+  (reload)
   (runner/run project))
 
 (defn all-files [paths]
