@@ -11,16 +11,17 @@ A Leiningen plugin to that will magically re-run all your tests when a file chan
 * Runs every time a clojure file in your project changes
 * Uses (Clansi)[https://github.com/ams-clj/clansi] to show a red or green bar to know if you tests are passing
 * Filters out exception stacktraces to remove cruft
+* Pass in a test matcher to change which tests are run from the command line.
 
 ## Usage
 
 Use this for project-level plugins:
 
-Put `[quickie "0.2.3"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.2.4"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
-By default all namespaces in your classpath with that contain your project name and end with the work `test` will be tested for each run.  To change this, add a line like this to your project.clj `:test-matcher #"my regular expression"`
+By default all namespaces in your classpath with that contain your project name and end with the work `test` will be tested for each run.  To change this, add a line like this to your project.clj `:test-matcher #"my regular expression"`.  Alternatively, you can call to quickie via the command line with the regex you wish to use (`lein quickie foo`).
 
 Hit ctrl+c whenever you are done.  Have fun!
 
