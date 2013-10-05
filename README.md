@@ -4,6 +4,8 @@ A Leiningen plugin to that will magically re-run all your tests when a file chan
 
 ![Screenshot](doc/screen.png)
 
+[![TODOs by codenotes.me](http://codenotes.me/badge/6499434/todos.png)](http://codenotes.me)
+
 ## Features
 
 * Uses the builtin clojure.test test runner so you don't need to rewrite your tests
