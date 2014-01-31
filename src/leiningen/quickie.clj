@@ -2,7 +2,7 @@
   (:require [leiningen.core.eval :as eval]))
 
 (defn paths [parameters project]
-  (assoc parameters :paths [(first (:source-paths project)) (first (:test-paths project))]))
+  (assoc parameters :paths (vec (concat (:source-paths project) (:test-paths project)))))
 
 (defn default-pattern [project]
   (let [name (or (:name project)
