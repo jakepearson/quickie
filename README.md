@@ -4,8 +4,6 @@ A Leiningen plugin to that will magically re-run all your tests when a file chan
 
 ![Screenshot](doc/screen.png)
 
-[![TODOs by codenotes.me](http://codenotes.me/badge/6499434/todos.png)](http://codenotes.me)
-
 ## Features
 
 * Uses the builtin clojure.test test runner so you don't need to rewrite your tests
@@ -19,7 +17,7 @@ A Leiningen plugin to that will magically re-run all your tests when a file chan
 
 Use this for project-level plugins:
 
-Put `[quickie "0.2.4"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.2.5"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
