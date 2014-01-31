@@ -19,8 +19,14 @@
 (defn all-files [paths]
   (mapcat #(file-seq (clojure.java.io/file %)) paths))
 
+(defn clj-file? [^java.io.File file]
+  (let [name (.getName file)]
+    (and (.endsWith name ".clj")
+         (not (.startsWith name ".#"))  ; exclude Emacs temp files
+         )))
+
 (defn all-clj-files [paths]
-  (filter #(.endsWith (.getName %) ".clj") (all-files paths)))
+  (filter clj-file? (all-files paths)))
 
 (defn get-file-state [paths]
   (reduce #(assoc %1 (.getAbsolutePath %2) (.lastModified %2)) {} (all-clj-files paths)))
