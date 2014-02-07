@@ -49,7 +49,7 @@
   (-> (:output result)
       last
       println)
-  (println (clansi/style "   All Tests Passing!!!!   " :black :bg-green)))
+  (println (clansi/style "   All Tests Passing!   " :black :bg-green)))
 
 (defn print-fail [result]
   (let [{:keys [error fail]} (:result result)
