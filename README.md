@@ -1,6 +1,6 @@
 # quickie
 
-A Leiningen plugin to that will magically re-run all your tests when a file changes.
+A Leiningen plugin that will magically re-run all your tests when a file changes.
 
 ![Screenshot](doc/screen.png)
 
@@ -21,7 +21,7 @@ Put `[quickie "0.2.5"]` into the `:plugins` vector of your project.clj.
 
     $ lein quickie
 
-By default all namespaces in your classpath with that contain your project name and end with the work `test` will be tested for each run.  To change this, add a line like this to your project.clj `:test-matcher #"my regular expression"`.  Alternatively, you can call to quickie via the command line with the regex you wish to use (`lein quickie foo`).
+By default all namespaces in your classpath that contain your project name and end with the word `test` will be tested on each run.  To change this, add a line like this to your project.clj: `:test-matcher #"my regular expression"`.  Alternatively, you can call quickie via the command line with the regex you wish to use: `lein quickie "my-project.*\.test\..*"`.
 
 Hit ctrl+c whenever you are done.  Have fun!
 
