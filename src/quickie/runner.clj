@@ -66,6 +66,28 @@
       (print-pass result)
       (print-fail result))))
 
+(defn run-parallel [project]
+  (let [results (->> (all-ns)
+                     (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
+                                           (not (.contains (str (ns-name ns)) "curator")))))
+                     (pmap (fn [ns]
+                             (let [result (test/test-ns ns)]
+                               [ns result])))
+                     (reduce (fn [results [ns result]]
+                               (-> results
+                                   (assoc-in [:tests (str (ns-name ns))] result)
+                                   (update-in [:summary :pass] + (:pass result))
+                                   (update-in [:summary :test] + (:test result))
+                                   (update-in [:summary :error] + (:error result))
+                                   (update-in [:summary :fail] + (:fail result))))
+                             {:summary {:pass  0
+                                        :test  0
+                                        :error 0
+                                        :fail  0}})
+                     doall)]
+    (clojure.pprint/pprint results)
+    results))
+
 (defn run [project]
   (try
     (let [matcher (:test-matcher project #"test")
