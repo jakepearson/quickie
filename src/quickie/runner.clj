@@ -1,6 +1,13 @@
 (ns quickie.runner
   (:require [clojure.test :as test]
             [clansi.core :as clansi]
+
+            [clojure.pprint]
+            [clojure.tools.namespace.find :as find]
+            [clojure.tools.namespace.track :as track]
+            [clojure.tools.namespace.file :as file]
+            [clojure.tools.namespace.repl :as repl]
+            
             [clojure.string :as string]))
 
 (defn out-str-result [f]
@@ -66,32 +73,58 @@
       (print-pass result)
       (print-fail result))))
 
+(defn- test-result [errors]
+  {:pass  0
+   :test  0
+   :error errors
+   :fail  0})
+
+(defn- test-ns [ns]
+  (let [output (java.io.StringWriter.)]
+    (binding [*out* output
+              test/*test-out* output]
+      (let [result (try
+                     (test/test-ns ns)
+                     (catch Exception e
+                       (assoc (test-result 1) :exception e)))]
+        [ns (assoc result :output (str output))]))))
+
 (defn run-parallel [project]
-  (let [results (->> (all-ns)
-                     (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
-                                           (not (.contains (str (ns-name ns)) "curator")))))
-                     (pmap (fn [ns]
-                             (let [result (test/test-ns ns)]
-                               [ns result])))
-                     (reduce (fn [results [ns result]]
-                               (-> results
-                                   (assoc-in [:tests (str (ns-name ns))] result)
-                                   (update-in [:summary :pass] + (:pass result))
-                                   (update-in [:summary :test] + (:test result))
-                                   (update-in [:summary :error] + (:error result))
-                                   (update-in [:summary :fail] + (:fail result))))
-                             {:summary {:pass  0
-                                        :test  0
-                                        :error 0
-                                        :fail  0}})
-                     doall)]
-    (clojure.pprint/pprint results)
-    results))
+  (try
+    (apply repl/set-refresh-dirs (:paths project ["./"]))
+    (repl/refresh)
+    (let [lock (Object.)
+          results      (->> (all-ns)
+                            (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
+                                                  (not (.contains (str (ns-name ns)) "curator")))))
+                            (pmap (fn [ns]
+                                    (let [[_ result] (test-ns ns)]
+                                      (locking lock
+                                        (println (:output result)))
+                                      [ns result])))
+                            (reduce (fn [results [ns result]]
+                                      (-> results
+                                          (assoc-in [:tests (str (ns-name ns))] result)
+                                          (update-in [:summary :pass] + (:pass result))
+                                          (update-in [:summary :test] + (:test result))
+                                          (update-in [:summary :error] + (:error result))
+                                          (update-in [:summary :fail] + (:fail result))))
+                                    {:summary (test-result 0)})
+                            doall)
+          total-errors (+ (get-in results [:summary :error])
+                          (get-in results [:summary :fail]))]
+      (clojure.pprint/pprint results)
+      (shutdown-agents)
+      (System/exit total-errors)
+      results)
+    (catch Exception e
+      (println e)
+      (System/exit 1))))
 
 (defn run [project]
-  (try
+    (try
     (let [matcher (:test-matcher project #"test")
-          result  (out-str-result #(test/run-all-tests matcher))]
+          result  (out-str-result (partial test/run-all-tests matcher))]
       (print-result result))
     (catch Exception e 
       (do

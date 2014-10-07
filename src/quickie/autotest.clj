@@ -25,11 +25,18 @@
          (not (.startsWith name ".#"))  ; exclude Emacs temp files
          )))
 
+
+
 (defn all-clj-files [paths]
   (filter clj-file? (all-files paths)))
 
 (defn get-file-state [paths]
-  (reduce #(assoc %1 (.getAbsolutePath %2) (.lastModified %2)) {} (all-clj-files paths)))
+  (reduce (fn [result file]
+            (assoc result
+              (.getAbsolutePath file)
+              (.lastModified file)))
+          {}
+          (all-clj-files paths)))
 
 (defn run-tests-forever [project]
   (loop [current-state (get-file-state (:paths project))

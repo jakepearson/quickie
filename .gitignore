@@ -9,3 +9,5 @@ pom.xml
 .lein-failures
 .lein-plugins
 *.asc
+/.lein-repl-history
+/.nrepl-port
