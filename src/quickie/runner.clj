@@ -1,6 +1,7 @@
 (ns quickie.runner
   (:require [clojure.test :as test]
             [clansi.core :as clansi]
+            [com.climate.claypoole :as threadpool]
 
             [clojure.pprint]
             [clojure.tools.namespace.find :as find]
@@ -74,47 +75,63 @@
       (print-fail result))))
 
 (defn- test-result [errors]
-  {:pass  0
-   :test  0
-   :error errors
-   :fail  0})
+  {:pass     0
+   :test     0
+   :error    errors
+   :fail     0
+   :success? (= 0 errors)})
 
 (defn- test-ns [ns]
   (let [output (java.io.StringWriter.)]
-    (binding [*out* output
+    (binding [*out*           output
               test/*test-out* output]
       (let [result (try
                      (test/test-ns ns)
                      (catch Exception e
                        (assoc (test-result 1) :exception e)))]
-        [ns (assoc result :output (str output))]))))
+        [ns (-> result
+                (assoc :output (str output))
+                (assoc :success? (= 0 (+ (:error result) (:fail result)))))]))))
+
+(defn- summarize [test-results]
+  (reduce (fn [results [ns result]]
+            (-> results
+                (assoc-in [:tests (str (ns-name ns))] result)
+                (update-in [:summary :pass] + (:pass result))
+                (update-in [:summary :test] + (:test result))
+                (update-in [:summary :error] + (:error result))
+                (update-in [:summary :fail] + (:fail result))))
+          {:summary (test-result 0)}
+          test-results))
 
 (defn run-parallel [project]
   (try
     (apply repl/set-refresh-dirs (:paths project ["./"]))
     (repl/refresh)
-    (let [lock (Object.)
+    (let [pool         (threadpool/threadpool 20)
+          lock         (Object.)
           results      (->> (all-ns)
                             (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
                                                   (not (.contains (str (ns-name ns)) "curator")))))
-                            (pmap (fn [ns]
-                                    (let [[_ result] (test-ns ns)]
-                                      (locking lock
-                                        (println (:output result)))
-                                      [ns result])))
-                            (reduce (fn [results [ns result]]
-                                      (-> results
-                                          (assoc-in [:tests (str (ns-name ns))] result)
-                                          (update-in [:summary :pass] + (:pass result))
-                                          (update-in [:summary :test] + (:test result))
-                                          (update-in [:summary :error] + (:error result))
-                                          (update-in [:summary :fail] + (:fail result))))
-                                    {:summary (test-result 0)})
+                            (threadpool/upmap
+                             pool
+                             (fn [ns]
+                               (let [ns-name    (ns-name ns)
+                                     [_ result] (test-ns ns)]
+                                 (locking lock
+                                   (if (:success? result)
+                                     (println (clansi/style (str "Pass: " ns-name)  :black :bg-green))
+                                     (do
+                                       (println (clansi/style (str "Fail: " ns-name) :black :bg-red))
+                                       (println (:output result)))))
+                                 [ns result])))
+                            summarize
                             doall)
           total-errors (+ (get-in results [:summary :error])
                           (get-in results [:summary :fail]))]
-      (clojure.pprint/pprint results)
-      (shutdown-agents)
+      (if (= 0 total-errors)
+        (print-pass (:summary results))
+        (print-fail (:summary results)))
       (System/exit total-errors)
       results)
     (catch Exception e

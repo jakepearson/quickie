@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [midje "1.5.1"]
                  [org.clojure/tools.namespace "0.2.5"]
+                 [com.climate/claypoole "0.3.1"]
                  [myguidingstar/clansi "1.3.0"]])
