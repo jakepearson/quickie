@@ -1,7 +1,33 @@
 (ns quickie.runner
   (:require [clojure.test :as test]
             [clansi.core :as clansi]
+            [com.climate.claypoole :as threadpool]
+
+            [clojure.pprint]
+            [clojure.tools.namespace.find :as find]
+            [clojure.tools.namespace.track :as track]
+            [clojure.tools.namespace.file :as file]
+            [clojure.tools.namespace.repl :as repl]
+            
             [clojure.string :as string]))
+
+
+(defn- pad [length orig-str pad-char fu]
+  (string/replace (format (fu length) orig-str) " " pad-char))
+
+(defn- rpad
+  ([length orig-str pad-char]
+     (let [rfstr (fn [length] (str "%-" length "s"))]
+       (pad length orig-str pad-char rfstr)))
+  ([length orig-str]
+     (rpad length orig-str ".")))
+
+(defn- lpad
+  ([length orig-str pad-char]
+     (let [lfstr (fn [length] (str "%" length "s"))]
+       (pad length orig-str pad-char lfstr)))
+  ([length orig-str]
+     (lpad length orig-str ".")))
 
 (defn out-str-result [f]
   (let [string-writer (new java.io.StringWriter)]
@@ -53,7 +79,7 @@
 
 (defn print-fail [result]
   (let [{:keys [error fail]} (:result result)
-        lines               (:output result)]
+        lines                (:output result)]
     (->> lines
          filter-lines
          (string/join "\n")
@@ -66,13 +92,109 @@
       (print-pass result)
       (print-fail result))))
 
-(defn run [project]
+(defn- duration-string [d]
+  (str "(" (clansi/style (str d "ms") :magenta) ")"))
+
+(defn print-ns-result [{:keys [success? ns duration output]} namespace-length]
+  (let [result           (if success?
+                           (clansi/style "Pass" :black :bg-green)
+                           (clansi/style "Fail" :black :bg-red))
+        rpad-length      (+ 20 namespace-length)
+        lpad-length      18
+        namespace-string (rpad rpad-length (ns-name ns))
+        duration-string  (lpad lpad-length (duration-string duration))
+        output           (str namespace-string duration-string  " " result)]
+    (println output)
+    (when-not success?
+      (println output))))
+
+(defn- test-result [errors]
+  {:pass     0
+   :test     0
+   :error    errors
+   :fail     0
+   :success? (= 0 errors)})
+
+(defn- test-ns [ns]
+  (let [output     (java.io.StringWriter.)
+        start-time (System/currentTimeMillis)]
+    (binding [*out*           output
+              test/*test-out* output]
+      (let [result (try
+                     (test/test-ns ns)
+                     (catch Exception e
+                       (.printStackTrace e)
+                       (assoc (test-result 1) :exception e)))]
+        (merge result
+               {:output   (str output)
+                :success? (= 0 (+ (:error result) (:fail result)))
+                :ns       ns
+                :duration (- (System/currentTimeMillis) start-time)})))))
+
+(defn- summarize [test-results]
+  (reduce (fn [results result]
+            (-> results
+                (assoc-in [:tests (str (ns-name (:ns result)))] result)
+                (update-in [:summary :pass] + (:pass result))
+                (update-in [:summary :test] + (:test result))
+                (update-in [:summary :error] + (:error result))
+                (update-in [:summary :fail] + (:fail result))))
+          {:summary (test-result 0)}
+          test-results))
+
+(defn- longest-namespace-name-length [namespaces]
+  (->> namespaces
+       (map ns-name)
+       (map str)
+       (map count)
+       (apply max)
+       )
+  )
+
+(defn- test-namespaces []
+  (->> (all-ns)
+       (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
+                             (not (.contains (str (ns-name ns)) "curator")))))))
+
+(defn run-parallel [project]
   (try
+    (apply repl/set-refresh-dirs (:paths project ["./"]))
+    (repl/refresh)
+    (let [test-nses         (test-namespaces)   
+          longest-ns-length (longest-namespace-name-length test-nses)
+          pool              (threadpool/threadpool 20)
+          lock              (Object.)
+          start-time        (System/currentTimeMillis)
+          results           (->> test-nses
+                                 (threadpool/upmap
+                                  pool
+                                  (fn [ns]
+                                    (let [result (test-ns ns)]
+                                      (locking lock
+                                        (print-ns-result result longest-ns-length))
+                                      result)))
+                                 summarize
+                                 doall)
+          total-errors      (+ (get-in results [:summary :error])
+                               (get-in results [:summary :fail]))
+          total-pass        (get-in results [:summary :pass])
+          summary-string    (str "\nTests Passed: " total-pass " Tests Failed: " total-errors)
+          duration          (duration-string (- (System/currentTimeMillis) start-time))
+          background-color (if (= 0 total-errors) :bg-green :bg-red)]
+      (println (clansi/style summary-string :black background-color) "  " duration)
+      (System/exit total-errors)
+      results)
+    (catch Exception e
+      (println e)
+      (.printStackTrace e)
+      (System/exit 1))))
+
+(defn run [project]
+    (try
     (let [matcher (:test-matcher project #"test")
-          result  (out-str-result #(test/run-all-tests matcher))]
+          result  (out-str-result (partial test/run-all-tests matcher))]
       (print-result result))
     (catch Exception e 
-      (do
-        (println (.getMessage e))
-        (.printStackTrace e)))))
+      (println (.getMessage e))
+      (.printStackTrace e))))
 

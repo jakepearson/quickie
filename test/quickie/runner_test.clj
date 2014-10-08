@@ -21,4 +21,3 @@
       (is (= lines (runner/filter-lines lines))))
     (let [lines ["a" "clojure.core" "clojure.core" "clojure.lang"]]
       (is (= 3 (count (runner/filter-lines lines)))))))
-
