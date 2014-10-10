@@ -1,5 +1,6 @@
 (ns leiningen.quickie
-  (:require [leiningen.core.eval :as eval]))
+  (:require [leiningen.core.eval :as eval]
+            [leiningen.core.project :as lein-project]))
 
 (defn paths [parameters project]
   (assoc parameters :paths (vec (concat (:source-paths project) (:test-paths project)))))
@@ -15,7 +16,9 @@
    (:test-matcher project) (:test-matcher project)
    :else                   (default-pattern project)))
 
-(defn run-parallel [project & args]
+(defn run-parallel
+  "Run each test in a different thread"
+  [project & args]
   (eval/eval-in-project 
     (update-in project [:dependencies] conj ['quickie "0.3.0"])
     (let [parameters (-> {}
@@ -27,10 +30,13 @@
 (defn quickie
   "Automatically run tests when clj files change"
   [project & args]
-  (eval/eval-in-project 
-    (update-in project [:dependencies] conj ['quickie "0.3.0"])
-    (let [parameters (-> {}
-                         (paths project)
-                         (assoc :test-matcher (test-matcher project args)))]
-      `(quickie.autotest/run ~parameters))
-    `(require 'quickie.autotest)))
+  (let [project (-> project
+                    (lein-project/merge-profiles [:test])
+                    (update-in [:dependencies] conj ['quickie "0.2.4"]))
+        parameters (-> {}
+                       (paths project)
+                       (assoc :test-matcher (test-matcher project args)))]
+    (eval/eval-in-project
+      project
+      `(quickie.autotest/run ~parameters)
+      `(require 'quickie.autotest))))
