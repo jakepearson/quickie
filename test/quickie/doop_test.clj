@@ -4,3 +4,6 @@
 
 (deftest stuff
   (is (= 1 3)))
+
+(deftest throw
+  (throw (Exception.)))

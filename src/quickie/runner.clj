@@ -47,7 +47,9 @@
    #"^clojure\.core"
    #"^clojure\.main"
    #"^java\.lang"
-   #"^java\.util\.concurrent\.ThreadPoolExecutor\$Worker"])
+   #"^java\.util\.concurrent\.ThreadPoolExecutor\$Worker"
+   #"^com\.climate\.claypoole"
+   #"^java\.util\.concurrent"])
 
 (defn needed-line [line]
   (let [line-trimmed (string/trim line)
@@ -103,10 +105,14 @@
         lpad-length      18
         namespace-string (rpad rpad-length (ns-name ns))
         duration-string  (lpad lpad-length (duration-string duration))
-        output           (str namespace-string duration-string  " " result)]
-    (println output)
+        output-summary   (str namespace-string duration-string  " " result)]
+    (println output-summary)
     (when-not success?
-      (println output))))
+      (->> (string/split output #"\n")
+           (drop 2)
+           filter-lines
+           (string/join "\n")
+           println))))
 
 (defn- test-result [errors]
   {:pass     0
@@ -147,20 +153,17 @@
        (map ns-name)
        (map str)
        (map count)
-       (apply max)
-       )
-  )
+       (apply max)))
 
 (defn- test-namespaces []
   (->> (all-ns)
-       (filter (fn [ns] (and (.endsWith (str (ns-name ns)) "-test")
-                             (not (.contains (str (ns-name ns)) "curator")))))))
+       (filter (fn [ns] (.endsWith (str (ns-name ns)) "-test")))))
 
 (defn run-parallel [project]
   (try
     (apply repl/set-refresh-dirs (:paths project ["./"]))
     (repl/refresh)
-    (let [test-nses         (test-namespaces)   
+    (let [test-nses         (test-namespaces)
           longest-ns-length (longest-namespace-name-length test-nses)
           pool              (threadpool/threadpool 20)
           lock              (Object.)
@@ -169,6 +172,7 @@
                                  (threadpool/upmap
                                   pool
                                   (fn [ns]
+                                    (println "starting" ns)
                                     (let [result (test-ns ns)]
                                       (locking lock
                                         (print-ns-result result longest-ns-length))
@@ -193,7 +197,7 @@
     (try
     (let [matcher (:test-matcher project #"test")
           result  (out-str-result (partial test/run-all-tests matcher))]
-      (print-result result))
+      (print-ns-result result))
     (catch Exception e 
       (println (.getMessage e))
       (.printStackTrace e))))
