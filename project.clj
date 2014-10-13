@@ -1,4 +1,4 @@
-(defproject quickie "0.3.3"
+(defproject quickie "0.3.4"
   :description "Automatically run tests when clj files change"
   :url "http://github.com/jakepearson/quickie"
   :license {:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}
