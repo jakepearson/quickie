@@ -13,17 +13,33 @@ A Leiningen plugin that will magically re-run all your tests when a file changes
 * Filters out exception stacktraces to remove cruft
 * Pass in a test matcher to change which tests are run from the command line.
 
-## Usage
+## Installation
 
 Use this for project-level plugins:
 
-Put `[quickie "0.2.5"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.3.5"]` into the `:plugins` vector of your project.clj.
 
-    $ lein quickie
+## Autotest Usage (quickie)
+
+Will rerun your test namespaces as clojure files in your project change
+
+```
+lein quickie
+```
 
 By default all namespaces in your classpath that contain your project name and end with the word `test` will be tested on each run.  To change this, add a line like this to your project.clj: `:test-matcher #"my regular expression"`.  Alternatively, you can call quickie via the command line with the regex you wish to use: `lein quickie "my-project.*\.test\..*"`.
 
 Hit ctrl+c whenever you are done.  Have fun!
+
+## Parallel Testing Usage (quickp)
+
+Will run your tests across across multiple threads (currently set to 20).
+
+```
+lein quickp
+```
+
+Running tests against multiple threads could cause test failures. If you use `with-redefs` in your tests you will needs to switch over to something like `with-local-redefs` as seen on [this gist](https://gist.github.com/gfredericks/7143494). 
 
 ## License
 

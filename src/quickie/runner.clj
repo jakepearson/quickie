@@ -107,12 +107,12 @@
         duration-string  (lpad lpad-length (duration-string duration))
         output-summary   (str namespace-string duration-string  " " result)]
     (println output-summary)
-    (when-not success?
-      (->> (string/split output #"\n")
-           (drop 2)
-           filter-lines
-           (string/join "\n")
-           println))))
+    (let [filtered-lines (->> (string/split output #"\n")
+                              (drop 2)
+                              filter-lines
+                              (string/join "\n"))]
+      (when-not (string/blank? filtered-lines)
+        (println filtered-lines)))))
 
 (defn- test-result [errors]
   {:pass     0
@@ -155,15 +155,17 @@
        (map count)
        (apply max)))
 
-(defn- test-namespaces []
-  (->> (all-ns)
-       (filter (fn [ns] (.endsWith (str (ns-name ns)) "-test")))))
+(defn- test-namespaces [matcher]
+  (let [filter-fn (fn [ns] (let [ns-name (-> ns ns-name str)]
+                             (re-find matcher ns-name)))]
+    (->> (all-ns)
+         (filter filter-fn))))
 
 (defn run-parallel [project]
   (try
     (apply repl/set-refresh-dirs (:paths project ["./"]))
     (repl/refresh)
-    (let [test-nses         (test-namespaces)
+    (let [test-nses         (test-namespaces (:test-matcher project))
           longest-ns-length (longest-namespace-name-length test-nses)
           pool              (threadpool/threadpool 20)
           lock              (Object.)
@@ -172,7 +174,6 @@
                                  (threadpool/upmap
                                   pool
                                   (fn [ns]
-                                    (println "starting" ns)
                                     (let [result (test-ns ns)]
                                       (locking lock
                                         (print-ns-result result longest-ns-length))

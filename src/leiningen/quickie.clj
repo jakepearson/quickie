@@ -16,11 +16,9 @@
    (:test-matcher project) (:test-matcher project)
    :else                   (default-pattern project)))
 
-(defn run-parallel
-  "Run each test in a different thread"
-  [project & args]
+(defn run-parallel [project & args]
   (eval/eval-in-project 
-    (update-in project [:dependencies] conj ['quickie "0.3.4"])
+    (update-in project [:dependencies] conj ['quickie "0.3.5"])
     (let [parameters (-> {}
                          (paths project)
                          (assoc :test-matcher (test-matcher project args)))]
@@ -32,7 +30,7 @@
   [project & args]
   (let [project (-> project
                     (lein-project/merge-profiles [:test])
-                    (update-in [:dependencies] conj ['quickie "0.3.4"]))
+                    (update-in [:dependencies] conj ['quickie "0.3.5"]))
         parameters (-> {}
                        (paths project)
                        (assoc :test-matcher (test-matcher project args)))]
