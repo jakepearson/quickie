@@ -1,5 +1,7 @@
 # quickie
 
+[![Clojars Project](http://clojars.org/quickie/latest-version.svg)](http://clojars.org/quickie)
+
 A Leiningen plugin that will magically re-run all your tests when a file changes.
 
 ![Screenshot](doc/screen.png)
