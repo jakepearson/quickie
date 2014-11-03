@@ -198,7 +198,7 @@
     (try
     (let [matcher (:test-matcher project #"test")
           result  (out-str-result (partial test/run-all-tests matcher))]
-      (print-ns-result result))
+      (print-result result))
     (catch Exception e 
       (println (.getMessage e))
       (.printStackTrace e))))
