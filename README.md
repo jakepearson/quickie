@@ -19,7 +19,7 @@ A Leiningen plugin that will magically re-run all your tests when a file changes
 
 Use this for project-level plugins:
 
-Put `[quickie "0.3.5"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.3.6"]` into the `:plugins` vector of your project.clj.
 
 ## Autotest Usage (quickie)
 
