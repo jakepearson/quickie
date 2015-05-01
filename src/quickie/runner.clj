@@ -153,7 +153,7 @@
        (map ns-name)
        (map str)
        (map count)
-       (apply max)))
+       (apply max 0)))
 
 (defn- test-namespaces [matcher]
   (let [filter-fn (fn [ns] (let [ns-name (-> ns ns-name str)]
