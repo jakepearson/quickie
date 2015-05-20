@@ -167,12 +167,10 @@
     (repl/refresh)
     (let [test-nses         (test-namespaces (:test-matcher project))
           longest-ns-length (longest-namespace-name-length test-nses)
-          pool              (threadpool/threadpool 20)
           lock              (Object.)
           start-time        (System/currentTimeMillis)
           results           (->> test-nses
-                                 (threadpool/upmap
-                                  pool
+                                 (threadpool/upmap 20
                                   (fn [ns]
                                     (let [result (test-ns ns)]
                                       (locking lock

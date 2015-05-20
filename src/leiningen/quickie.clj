@@ -18,7 +18,7 @@
 
 (defn run-parallel [project & args]
   (eval/eval-in-project 
-    (update-in project [:dependencies] conj ['quickie "0.3.10"])
+    (update-in project [:dependencies] conj ['quickie "0.3.11"])
     (let [parameters (-> {}
                          (paths project)
                          (assoc :test-matcher (test-matcher project args)))]
@@ -30,7 +30,7 @@
   [project & args]
   (let [project (-> project
                     (lein-project/merge-profiles [:test])
-                    (update-in [:dependencies] conj ['quickie "0.3.10"]))
+                    (update-in [:dependencies] conj ['quickie "0.3.11"]))
         parameters (-> {}
                        (paths project)
                        (assoc :test-matcher (test-matcher project args)))]
