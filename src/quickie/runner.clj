@@ -164,29 +164,31 @@
 (defn run-parallel [project]
   (try
     (apply repl/set-refresh-dirs (:paths project ["./"]))
-    (repl/refresh)
-    (let [test-nses         (test-namespaces (:test-matcher project))
-          longest-ns-length (longest-namespace-name-length test-nses)
-          lock              (Object.)
-          start-time        (System/currentTimeMillis)
-          results           (->> test-nses
-                                 (threadpool/upmap 20
-                                  (fn [ns]
-                                    (let [result (test-ns ns)]
-                                      (locking lock
-                                        (print-ns-result result longest-ns-length))
-                                      result)))
-                                 summarize
-                                 doall)
-          total-errors      (+ (get-in results [:summary :error])
-                               (get-in results [:summary :fail]))
-          total-pass        (get-in results [:summary :pass])
-          summary-string    (str "\nTests Passed: " total-pass " Tests Failed: " total-errors)
-          duration          (duration-string (- (System/currentTimeMillis) start-time))
-          background-color (if (= 0 total-errors) :bg-green :bg-red)]
-      (println (clansi/style summary-string :black background-color) "  " duration)
-      (System/exit total-errors)
-      results)
+    (let [refresh-result (repl/refresh)]
+      (if (= :ok refresh-result)
+        (let [test-nses         (test-namespaces (:test-matcher project))
+              longest-ns-length (longest-namespace-name-length test-nses)
+              lock              (Object.)
+              start-time        (System/currentTimeMillis)
+              results           (->> test-nses
+                                     (threadpool/upmap 20
+                                                       (fn [ns]
+                                                         (let [result (test-ns ns)]
+                                                           (locking lock
+                                                             (print-ns-result result longest-ns-length))
+                                                           result)))
+                                     summarize
+                                     doall)
+              total-errors      (+ (get-in results [:summary :error])
+                                   (get-in results [:summary :fail]))
+              total-pass        (get-in results [:summary :pass])
+              summary-string    (str "\nTests Passed: " total-pass " Tests Failed: " total-errors)
+              duration          (duration-string (- (System/currentTimeMillis) start-time))
+              background-color (if (= 0 total-errors) :bg-green :bg-red)]
+          (println (clansi/style summary-string :black background-color) "  " duration)
+          (System/exit total-errors)
+          results)
+        (throw refresh-result)))
     (catch Exception e
       (println e)
       (.printStackTrace e)
