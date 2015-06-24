@@ -19,7 +19,7 @@ A Leiningen plugin that will magically re-run all your tests when a file changes
 
 Use this for project-level plugins:
 
-Put `[quickie "0.3.6"]` into the `:plugins` vector of your project.clj.
+Put `[quickie "0.4.0"]` into the `:plugins` vector of your project.clj.
 
 ## Autotest Usage (quickie)
 
@@ -45,7 +45,7 @@ Running tests against multiple threads could cause test failures. If you use `wi
 
 ## License
 
-Copyright © 2012 Jake Pearson
+Copyright © 2015 Jake Pearson
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
