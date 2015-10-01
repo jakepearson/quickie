@@ -121,21 +121,25 @@
    :fail     0
    :success? (= 0 errors)})
 
-(defn- test-ns [ns]
-  (let [output     (java.io.StringWriter.)
-        start-time (System/currentTimeMillis)]
+(defn capture-result-and-output [f]
+  (let [output (java.io.StringWriter.)]
     (binding [*out*           output
               test/*test-out* output]
-      (let [result (try
-                     (test/test-ns ns)
-                     (catch Exception e
-                       (.printStackTrace e)
-                       (assoc (test-result 1) :exception e)))]
-        (merge result
-               {:output   (str output)
-                :success? (= 0 (+ (:error result) (:fail result)))
-                :ns       ns
-                :duration (- (System/currentTimeMillis) start-time)})))))
+      [(f) (str output)])))
+
+(defn- test-ns [ns]
+  (let [start-time      (System/currentTimeMillis)
+        [result output] (capture-result-and-output
+                         (fn [] (try
+                                  (test/test-ns ns)
+                                  (catch Exception e
+                                    (.printStackTrace e)
+                                    (assoc (test-result 1) :exception e)))))]
+    (merge result
+           {:output   (str output)
+            :success? (= 0 (+ (:error result) (:fail result)))
+            :ns       ns
+            :duration (- (System/currentTimeMillis) start-time)})))
 
 (defn- summarize [test-results]
   (reduce (fn [results result]
@@ -164,7 +168,7 @@
 (defn run-parallel [project]
   (try
     (apply repl/set-refresh-dirs (:paths project ["./"]))
-    (let [refresh-result (repl/refresh)]
+    (let [[refresh-result output] (capture-result-and-output repl/refresh)]
       (if (= :ok refresh-result)
         (let [test-nses         (test-namespaces (:test-matcher project))
               longest-ns-length (longest-namespace-name-length test-nses)
@@ -188,7 +192,9 @@
           (println (clansi/style summary-string :black background-color) "  " duration)
           (System/exit total-errors)
           results)
-        (throw refresh-result)))
+        (do
+          (println output)
+          (throw refresh-result))))
     (catch Exception e
       (println e)
       (.printStackTrace e)
