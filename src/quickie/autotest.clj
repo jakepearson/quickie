@@ -19,16 +19,16 @@
 (defn all-files [paths]
   (mapcat #(file-seq (clojure.java.io/file %)) paths))
 
-(defn clj-file? [^java.io.File file]
+(defn clj-cljc-file? [^java.io.File file]
   (let [name (.getName file)]
-    (and (.endsWith name ".clj")
+    (and (or (.endsWith name ".clj") (.endsWith name ".cljc"))
          (not (.startsWith name ".#"))  ; exclude Emacs temp files
          )))
 
 
 
-(defn all-clj-files [paths]
-  (filter clj-file? (all-files paths)))
+(defn all-clj-cljc-files [paths]
+  (filter clj-cljc-file? (all-files paths)))
 
 (defn get-file-state [paths]
   (reduce (fn [result file]
@@ -36,7 +36,7 @@
               (.getAbsolutePath file)
               (.lastModified file)))
           {}
-          (all-clj-files paths)))
+          (all-clj-cljc-files paths)))
 
 (defn run-tests-forever [project]
   (loop [current-state (get-file-state (:paths project))
